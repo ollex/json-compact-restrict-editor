@@ -131,11 +131,11 @@ class JSON_Editor extends HTMLElement {
         if( input === null )
             return '<span part="null">null</span>'
         let output = ''
-        output += `<span part="braces">{</span><br>\n`
+        output += `<span part="braces">{</span>`
         output += Object.keys(input).map((key, index, list) => {
-            return `${'&nbsp;'.repeat(offset+this.indent)}<span part="key" part="key"><span part="key_quotes">\"</span>${key}<span part="key_quotes">\"</span></span><span part="colon">:</span><span part="value">${this.format_input(input[key], offset+this.indent)}</span>${index < list.length-1 ? '<span part="comma">,</span>' : ''}<br>\n`
+            return `<span part="key" part="key"><span part="key_quotes">\"</span>${key}<span part="key_quotes">\"</span></span><span part="colon">:</span><span part="value">${this.format_input(input[key], offset+this.indent)}</span>${index < list.length-1 ? '<span part="comma">,</span>' : ''}`
         }).join('')
-        output += '&nbsp;'.repeat(offset)
+        //output += '&nbsp;'.repeat(offset)
         output += `<span part="braces">}</span>`
         return output
     }
@@ -189,21 +189,30 @@ class JSON_Editor extends HTMLElement {
     format() {
         const editor = this.editor
         const pointer = this.get_caret_pointer()
-        let content = ''
+        let content = '', jcontent;
         try {
             // remove %A0 (NBSP) characters, which are no valid in JSON
-            content = editor.innerText && JSON.parse(editor.innerText.split('\xa0').join(''))
+            content = editor.innerText.trim().split('\xa0').join('')
+            if(!content.startsWith("[")) {
+                content = "["+content;
+            }
+            if(!content.endsWith("]")) {
+                content += "]"
+            }
+            jcontent = JSON.parse(content)
+            // now remove unwanted keys !
+            
         }
         catch(exception) {
             return
         }
 
         // prevent unnecesary render
-        const current_string_content = JSON.stringify(content)
+        const current_string_content = JSON.stringify(jcontent)
         if(!content || current_string_content == this.last_string_content)
             return
 
-        editor.innerHTML = this.format_input(content)
+        editor.innerHTML = this.format_input(jcontent)
         this.last_string_content = current_string_content
         if(pointer && focus)
             this.set_caret_from_pointer(pointer)
@@ -238,3 +247,4 @@ class JSON_Editor extends HTMLElement {
 }
 
 customElements.define('json-editor', JSON_Editor)
+
