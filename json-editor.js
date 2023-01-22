@@ -35,7 +35,10 @@ class JSON_Editor extends HTMLElement {
             </style>
             <div id="editor" contentEditable="true" tabIndex="0"></div>
         `
-
+        this.whitelist = ['cmd','val','if']
+        /*this.whitelist = ['header', 'footer', 'items', 'nl', 'bold', 'bold-off', 'cut', 'pcut', 'htab', 'open-drawer', 'align-left',
+        'align-center', 'align-right', 'underline', 'font-a', 'font-b', 'double-height', 'double-width', 'italic',
+        'italic-off', 'size-double', 'double-off', 'text', 'width']*/
         this.last_string_content = ''
         this.attachShadow({ mode: 'open' })
         this.shadowRoot.appendChild( template.content.cloneNode(true) )
@@ -193,20 +196,25 @@ class JSON_Editor extends HTMLElement {
         try {
             // remove %A0 (NBSP) characters, which are no valid in JSON
             content = editor.innerText.trim().split('\xa0').join('')
-            if(!content.startsWith("[")) {
-                content = "["+content;
+            if(!content.startsWith('[')) {
+                content = '['+content;
             }
-            if(!content.endsWith("]")) {
-                content += "]"
+            if(!content.endsWith(']')) {
+                content += ']'
             }
             jcontent = JSON.parse(content)
             // now remove unwanted keys !
-            
-        }
-        catch(exception) {
+            jcontent.forEach((el) => {
+                 Object.keys(el).forEach((k)=>{
+                    if(!this.whitelist.includes(k)) {
+                        delete(content[k])
+                    };
+                })
+            })
+           
+        } catch(exception) {
             return
         }
-
         // prevent unnecesary render
         const current_string_content = JSON.stringify(jcontent)
         if(!content || current_string_content == this.last_string_content)
@@ -247,4 +255,3 @@ class JSON_Editor extends HTMLElement {
 }
 
 customElements.define('json-editor', JSON_Editor)
-
