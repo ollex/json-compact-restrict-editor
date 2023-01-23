@@ -36,9 +36,9 @@ class JSON_Editor extends HTMLElement {
             <div id="editor" contentEditable="true" tabIndex="0"></div>
         `
         this.whitelist = ['cmd','val','if']
-        /*this.whitelist = ['header', 'footer', 'items', 'nl', 'bold', 'bold-off', 'cut', 'pcut', 'htab', 'open-drawer', 'align-left',
+        this.cmd_whitelist = ['header', 'footer', 'items', 'nl', 'bold', 'bold-off', 'cut', 'pcut', 'htab', 'open-drawer', 'align-left',
         'align-center', 'align-right', 'underline', 'font-a', 'font-b', 'double-height', 'double-width', 'italic',
-        'italic-off', 'size-double', 'double-off', 'text', 'width']*/
+        'italic-off', 'size-double', 'double-off', 'text', 'width']
         this.last_string_content = ''
         this.attachShadow({ mode: 'open' })
         this.shadowRoot.appendChild( template.content.cloneNode(true) )
@@ -189,6 +189,27 @@ class JSON_Editor extends HTMLElement {
         }
     }
 
+    validate() {
+        console.log(this.current_content)
+        // do a more complete check for cmd types and val, if contents (must be strings and in case of cmd=>val val must be in cmd_whitelist)
+        if(!this.current_content) {
+            return false;
+        }
+        let isOk = true;
+        this.current_content.forEach((it) => {
+            if(!it.hasOwnProperty('cmd') || !it.cmd) {
+                // think about how to bail more pronounced!
+                isOk = false;
+            }
+            if(!this.cmd_whitelist.includes(it.cmd)) {
+                // think about how to bail more pronounced!
+                console.log("wrong");
+                isOk = false;
+            }
+        })
+        return isOk;
+    }
+
     format() {
         const editor = this.editor
         const pointer = this.get_caret_pointer()
@@ -209,19 +230,21 @@ class JSON_Editor extends HTMLElement {
                     if(!this.whitelist.includes(k)) {
                         delete(content[k])
                     };
+
                 })
             })
            
         } catch(exception) {
-            return
+            return this.current_content = false
         }
+        this.current_content = jcontent;
         // prevent unnecesary render
         const current_string_content = JSON.stringify(jcontent)
-        if(!content || current_string_content == this.last_string_content)
+        if(current_string_content == this.last_string_content)
             return
-
         editor.innerHTML = this.format_input(jcontent)
         this.last_string_content = current_string_content
+        
         if(pointer && focus)
             this.set_caret_from_pointer(pointer)
     }
